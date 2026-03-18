@@ -1,0 +1,119 @@
+
+Load baseball data into PostgreSQL database
+
+
+Preview
+Read the README first. Then write a script to load scrape_3.csv into the baseball_db PostgreSQL database on localhost port 5432. After loading, run a few test queries to confirm the data is there — row count, a sample of pitchers, and average pitch velocity by pitch type.
+
+
+
+Read project README and examined Baseball Savant data pipeline CSV file
+Read project README and examined Baseball Savant data pipeline CSV file
+Show more
+
+Now let me read the SQL setup file and session log to understand the DB schema.
+
+
+Read SQL setup guide and reviewed project session log from February 21st
+Read SQL setup guide and reviewed project session log from February 21st
+
+Now I have everything I need. Let me check the CSV column count to confirm the header before writing the script.
+
+
+Analyzed CSV file: 109 columns, 272 data rows
+Analyzed CSV file: 109 columns, 272 data rows
+Show more
+
+Good — 109 columns, 272 rows confirmed. Let me check what packages are available.
+
+
+Verified installed versions of pandas, SQLAlchemy, psycopg2
+Verified installed versions of pandas, SQLAlchemy, psycopg2
+
+All three packages are available. Now I'll write the script.
+
+
+Created load_scrape3.py script for database loading and validation
+Created load_scrape3.py script for database loading and validation
+
+Now let's run it. You'll need your PostgreSQL password — the script reads it from the PGPASSWORD environment variable:
+
+
+Attempted to run database script, authentication failed
+Attempted to run database script, authentication failed
+Show more
+
+As expected — it needs your PostgreSQL password. What's the password you set when you installed PostgreSQL?
+
+Once you tell me, I can run it one of two ways:
+
+Option A (safer): I set PGPASSWORD temporarily in the shell and run — the password never touches the file
+Option B: I paste it directly into the DB_PASS line in the script (easy, but it lives in the file)
+Which do you prefer, and what's the password?
+
+Manipura1
+
+
+
+Executed data load script, wrote 272 rows to database, encountered error
+Executed data load script, wrote 272 rows to database, encountered error
+Show more
+
+The data loaded successfully — that error is just the Windows console choking on the Unicode ─ separator character in the print output. The write to the DB completed. Let me fix the separator to plain ASCII:
+
+
+Loaded 272 baseball pitch records into database
+Loaded 272 baseball pitch records into database
+Show more
+
+Everything is in. Here's the summary:
+
+Load: 272 rows × 109 columns written to baseball_db.pitches
+
+Query results:
+
+Row count: 272 — matches the CSV exactly
+
+Pitchers: 8 pitchers from the Blue Jays @ Pirates game (gamePk 776661, 8/20/2025):
+
+PIT starters/relievers: Johan Oviedo, Kyle Nicolas, Dennis Santana, Isaac Mattson
+TOR starters/relievers: Chris Bassitt, Braydon Fisher, Brendon Little, Seranthony Domínguez
+Avg velocity by pitch type (fastest to slowest):
+
+4-Seam Fastball: 95.2 mph (75 pitches)
+Sinker: 93.0 mph
+Cutter: 90.7 mph
+Slider: 87.5 mph
+Sweeper: 76.4 mph
+Curveball: 75.9 mph
+The × showing as ? in the terminal is just a Windows console encoding quirk — the data itself is clean in the database. The script is reusable and idempotent (if_exists="replace"), so you can run it again any time to reload. To use it going forward without the password in a shell command, set PGPASSWORD=Manipura1 as a Windows environment variable in System Settings.
+
+should i see action in the pgAdmin sql windows?
+
+
+
+Yes — open pgAdmin, connect to baseball_db, and run this in the Query Tool:
+
+SELECT pitcher_name, pitch_name, start_speed
+FROM pitches
+LIMIT 10;
+
+To get there:
+
+Left panel → Servers → PostgreSQL → Databases → baseball_db
+Right-click baseball_db → Query Tool
+Paste the query above and hit the Execute Query button (▶)
+You should also now see the pitches table listed in the object explorer under:
+
+baseball_db → Schemas → public → Tables → pitches
+
+You may need to right-click Tables and hit Refresh if it was already open before the script ran.
+
+
+
+
+
+
+C:\Users\...\Desktop\OGUN
+
+

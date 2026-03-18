@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ogun-app",
+      "runtimeExecutable": "streamlit",
+      "runtimeArgs": ["run", "ogun_app.py", "--server.port", "8501"],
+      "port": 8501
+    },
+    {
+      "name": "wbc-app",
+      "runtimeExecutable": "streamlit",
+      "runtimeArgs": ["run", "WBC/wbc_app.py", "--server.port", "8502"],
+      "port": 8502
+    }
+  ]
+}

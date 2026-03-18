@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(PGPASSWORD=Manipura1 python3:*)",
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(PGPASSWORD=Manipura1 python load_sept_sample.py)",
+      "Bash(pip install python-docx -q)",
+      "Bash(echo $CLAUDE_CODE_MAX_OUTPUT_TOKENS)",
+      "Bash(~/.bashrc)",
+      "Bash(source ~/.bashrc)",
+      "Bash(echo \"Set to: $CLAUDE_CODE_MAX_OUTPUT_TOKENS\")",
+      "Bash(pip install plotly -q)",
+      "Bash(start \"\" streamlit run ogun_app.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8501)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8501/healthz)",
+      "Bash(netstat -ano)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8501/)",
+      "Bash(taskkill /F /IM python.exe /T)",
+      "Bash(cmd /c \"taskkill /F /PID 8988\")",
+      "Bash(cmd /c \"taskkill /F /PID 8988 2>&1\")",
+      "Bash(PGPASSWORD=Manipura1 psql -U postgres -h localhost -c \"CREATE DATABASE wbc_db;\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8502/)",
+      "Bash(PGPASSWORD=Manipura1 psql -U postgres -h localhost -d baseball_db -c \"SELECT COUNT\\(*\\) as total_pitches, COUNT\\(DISTINCT game_pk\\) as games, MIN\\(game_date\\) as earliest, MAX\\(game_date\\) as latest FROM pitches;\")",
+      "Bash(cmd /c \"PGPASSWORD=Manipura1 psql -U postgres -h localhost -d baseball_db -c \"\"SELECT COUNT\\(*\\) as total_pitches, COUNT\\(DISTINCT game_pk\\) as games, MIN\\(game_date\\) as earliest, MAX\\(game_date\\) as latest FROM pitches;\"\" 2>&1\")",
+      "Bash(cmd /c \"set PGPASSWORD=Manipura1 && psql -U postgres -h localhost -d baseball_db -c \"\"SELECT COUNT\\(*\\) as total_pitches, COUNT\\(DISTINCT game_pk\\) as games, MIN\\(game_date\\) as earliest, MAX\\(game_date\\) as latest FROM pitches;\"\"\")",
+      "Bash(cmd /c \"set PGPASSWORD=Manipura1 && \"\"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql\"\" -U postgres -h localhost -d baseball_db -c \"\"SELECT COUNT\\(*\\) as total_pitches, COUNT\\(DISTINCT game_pk\\) as games, MIN\\(game_date\\) as earliest, MAX\\(game_date\\) as latest FROM pitches;\"\"\")",
+      "Bash(ls -lh /c/OGUN/*.csv)",
+      "Bash(git add requirements.txt)",
+      "Bash(git commit -m \"Add requirements.txt for Streamlit Cloud deployment\")",
+      "Bash(git push)",
+      "Bash(git add .gitignore requirements.txt)",
+      "Bash(cat \"C:/OGUN/Summary notes sesion 1/AttributeError module ''plotly.graph.txt\")",
+      "Bash(mv \"C:/OGUN/WBC\" \"C:/WBC\")",
+      "Read(//c//**)"
+    ]
+  }
+}

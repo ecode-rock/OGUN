@@ -1,0 +1,45 @@
+//Main Website:
+
+
+https://baseballsavant.mlb.com/
+
+
+
+//date selector on main page:
+
+
+<input type="text" class="flex-cal calendar" value="2/21" readonly="">
+
+
+//new date selected:
+
+<input type="text" class="flex-cal calendar" value="8/20" readonly="">
+
+
+// gamefeed link from banner of a single game where the banner has all games played that day
+
+<input type="text" class="flex-cal calendar" value="8/20" readonly="">
+
+
+// gamefeed " start" url shows UI for all game data:
+
+https://baseballsavant.mlb.com/gamefeed?gamePk=776661
+
+
+// scoreboard element shows the end result of every plate appearance.
+
+<div id="button_scoreboard_776661" class="nav-select nav-btn-776661 button button-selected">Scoreboard</div>
+
+
+// box score shows the teams and the players on the teams:
+
+<div id="button_boxScore_776661" class="nav-select nav-btn-776661 button button-selected">Box Score</div>
+
+
+// pitch velocity has every individual pitch of the game:
+
+<div id="button_pitchVelocity_776661" class="nav-select nav-btn-776661 button button-selected">Pitch Velocity</div>
+
+
+
+// i will need data from each of these  "scoreboard, boxscore, and Pitch Velocity.

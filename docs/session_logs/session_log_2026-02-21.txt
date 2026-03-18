@@ -1,0 +1,314 @@
+# OGUN Project — Session Log
+### Date: 2026-02-21
+
+---
+
+## SESSION OVERVIEW
+
+This session covered three things:
+1. Reading and understanding the project README
+2. Performing a cohesion analysis across all documents in the folder
+3. Fetching the /gf API endpoint live and generating scrape_3.csv — a full flat CSV of all pitch data for gamePk 776661 (Blue Jays @ Pirates, 8/20/2025)
+
+---
+
+## FILES IN FOLDER AT SESSION START
+
+| Filename                        | Description                                                  |
+|---------------------------------|--------------------------------------------------------------|
+| Baseball Savant data pipeline.txt | Project README (renamed to Readme.txt during session)      |
+| Baseball Savant Website.txt     | Early discovery notes — UI elements, URLs, DOM snippets      |
+| scrape 1.txt                    | Raw minified JSON from schedule endpoint — 8/20/2025         |
+| scrape 2.txt                    | Same data, pretty-printed — used for structure inspection    |
+
+### File added this session:
+| Filename       | Description                                                        |
+|----------------|--------------------------------------------------------------------|
+| scrape_3.csv   | Flat CSV — all pitches for gamePk 776661, 272 rows x 109 columns  |
+
+---
+
+## README SUMMARY
+
+**Project goal:** Automated daily pipeline that pulls MLB game data from Baseball Savant (Statcast), cleans it, and outputs CSV files to power a website. One scheduled morning run captures all completed games from the previous day.
+
+**Key discovery (Phase 1, already completed):**
+No browser scraping is needed. All data is available through two clean JSON API endpoints:
+
+  Endpoint 1 — Daily schedule:
+    https://baseballsavant.mlb.com/schedule?date=YYYY-M-D
+    Returns all games for a date: gamePks, team names, status, doubleheader flags.
+
+  Endpoint 2 — Full game data:
+    https://baseballsavant.mlb.com/gf?game_pk=GAMEPK
+    Returns all pitch data, scoreboard/linescore, boxscore, and win probability.
+
+**Target output — four CSV types per day:**
+  - pitches_YYYYMMDD.csv     (one row per pitch)
+  - games_YYYYMMDD.csv       (one row per game)
+  - innings_YYYYMMDD.csv     (one row per half-inning)
+  - wpa_YYYYMMDD.csv         (one row per at-bat, win probability)
+
+**Tech stack:** Python 3, requests, pandas. No authentication required on endpoints (as of 8/20/2025).
+
+**Known data quality issues flagged in README:**
+  - Player biographical bloat (birthDate, birthCity, height, weight, gender, draftYear, etc.)
+  - 8+ redundant name fields per player (only fullName needed)
+  - Live game-state cursor fields (onDeck, inHole — meaningless post-game)
+  - API link fields (/api/v1/... hrefs throughout)
+  - Operational metadata (calendarEventID, reverseHomeAwayStatus, ifNecessaryDescription, etc.)
+  - Floating point noise (e.g. 0.700000000000003)
+
+**Edge cases to handle:**
+  - Doubleheader Game 1 / Game 2 — tag in CSV
+  - Postponed / Cancelled games — log to edge_cases.log, skip
+  - No games today — clean exit
+  - Missing fields — always use .get() with None default
+
+**Known good test gamePk:** 776661 (Blue Jays @ Pirates, 8/20/2025)
+
+---
+
+## COHESION ANALYSIS FINDINGS
+
+### What was confirmed consistent across all documents:
+
+  - Top-level JSON keys (wpa, schedule) match README description exactly
+  - gamePk type discrepancy confirmed: string in wpa array ("776659"), integer in schedule object (776661) — README correctly documents this, normalize to integer
+  - Player biographical bloat confirmed present in raw data
+  - 8+ redundant name fields confirmed present
+  - API link fields confirmed throughout
+  - All operational metadata fields confirmed (calendarEventID, reverseHomeAwayStatus, etc.)
+  - Floating point noise confirmed (e.g. 0.700000000000003 in WPA values)
+  - Linescore structure confirmed: per-inning runs/hits/errors/leftOnBase for home and away
+  - All game-level fields confirmed: doubleHeader, gameNumber, dayNight, seriesDescription, detailedState
+  - gamePk 776661 confirmed as TOR (away) @ PIT (home)
+
+### Issues and gaps flagged:
+
+  1. FILENAME MISMATCH IN README TABLE
+     The README's file table lists files with underscores (scrape_1.txt) and .md extension (README.md).
+     Actual filenames use spaces and the file is now Readme.txt.
+     Low priority — update the table before handing off to Claude Code.
+
+  2. UNDOCUMENTED WPA FIELDS: hwp and awp
+     The wpa array contains two fields not mentioned anywhere in the README: hwp and awp.
+     These appear to be centered/shifted win probabilities (e.g. homeTeamWinProbability: 82.5 -> hwp: 32.5, which is 82.5 - 50).
+     DECISION NEEDED: Keep or discard from WPA CSV?
+
+  3. LINESCORE LIVE-STATE FIELDS NOT FLAGGED
+     The README flags onDeck/inHole as mid-game noise but misses additional stale fields in the linescore:
+     currentInning, currentInningOrdinal, inningState, inningHalf, isTopInning.
+     These should be added to the discard list.
+
+  4. COPY-PASTE ERROR IN Baseball Savant Website.txt
+     The comment "// gamefeed link from banner of a single game" shows a calendar input element
+     instead of the game banner link element. Internal inconsistency — does not affect the pipeline
+     since this file is historical discovery notes only.
+
+  5. Baseball Savant Website.txt IS SUPERSEDED
+     This file describes the three UI tabs as separate scrape targets. The README correctly supersedes
+     this by explaining all three draw from the single /gf endpoint. Worth adding a note in the file.
+
+  6. STRUCTURAL GAP — NO /gf SAMPLE IN FOLDER (resolved this session)
+     The README's pitch schema depended on the /gf endpoint structure, but no sample of that response
+     existed in the folder. This was the primary gap. RESOLVED: scrape_3.csv was generated by fetching
+     the live /gf endpoint for gamePk 776661.
+
+---
+
+## /gf ENDPOINT — STRUCTURE DISCOVERED THIS SESSION
+
+URL: https://baseballsavant.mlb.com/gf?game_pk=776661
+
+Top-level keys in response:
+  game_status_code, game_status, gamedayType, gameDate, hasAbs,
+  scoreboard, venue_id, home_team_data, away_team_data,
+  team_home_id, team_away_id,
+  team_home  [list — 117 pitch rows for home team pitching],
+  team_away  [list — 155 pitch rows for away team pitching],
+  exit_velocity  [list — 39 rows, batted balls only],
+  home_pitchers, away_pitchers  [dicts keyed by player ID],
+  home_batters, away_batters    [dicts keyed by player ID],
+  home_lineup, away_lineup, home_pitcher_lineup, away_pitcher_lineup,
+  boxscore, players, cacheKey, cache_hit, game_date
+
+Key architectural note:
+  - Pitch data is split into team_home and team_away arrays (pitches FROM each team's perspective)
+  - Exit velocity (batted ball) data is in a SEPARATE exit_velocity array
+  - The two must be merged by play_id to get complete pitch + batted ball data on one row
+  - Pitches without a batted ball event will have blank EV columns — this is correct/expected
+
+---
+
+## scrape_3.csv — COLUMN INVENTORY (109 columns, 272 rows)
+
+=== GAME METADATA (4) — added by pipeline script ===
+  game_pk, game_date, home_team, away_team
+
+=== IDENTITY / PLAY CONTEXT (14) ===
+  type          — always "pitch" (noise — discard)
+  source        — always "gamefeed" (noise — discard)
+  play_id       — UUID per pitch
+  rowId         — "pitchcount-gamePk" string (e.g. "23-776661")
+  cap_index     — internal sequencing index
+  index         — internal
+  inning        — inning number
+  ab_number     — at-bat number within game
+  pitch_number  — pitch number within at-bat
+  game_total_pitches — running pitch count for game
+  is_last_pitch — boolean, final pitch of at-bat
+  is_abs_challenge — ABS (automated ball-strike) challenge flag
+  player_name   — actually the FIELDING team abbreviation (misleading name, likely noise)
+  game_pk       — native field, redundant with added game_pk column
+
+=== BATTER / PITCHER (9) ===
+  batter            — numeric player ID
+  batter_name       — full name string
+  stand             — batter handedness (L/R)
+  pitcher           — numeric player ID
+  pitcher_name      — full name string
+  p_throws          — pitcher handedness (L/R)
+  team_batting      — batting team abbreviation
+  team_fielding     — fielding team abbreviation
+  team_batting_id   — numeric team ID
+  team_fielding_id  — numeric team ID
+
+=== COUNT / RESULT (15) ===
+  balls, strikes, outs         — count AT TIME OF PITCH
+  pre_balls, pre_strikes       — count BEFORE pitch (use these for "count going in")
+  balls_and_strikes            — string like "00", "12", "32"
+  result                       — plate appearance result (e.g. "Strikeout", "Single")
+  events                       — same as result on last pitch of PA, blank otherwise
+  des                          — play description string
+  call                         — single-letter call code (S, B, X, F, etc.)
+  call_name                    — human-readable call (Strike, Ball, In play, Foul, etc.)
+  description                  — more detailed description
+  result_code                  — single-letter result code
+  pitch_call                   — lowercase call (foul, ball, called_strike, etc.)
+  is_strike_swinging            — boolean
+  is_bip_out                   — "Y"/"N" string — ball in play that resulted in out
+  contextMetrics               — always empty dict {} (noise — discard)
+
+=== PITCH TYPE / VELOCITY (6) ===
+  pitch_type    — abbreviation (SI, FF, SL, CH, etc.)
+  pitch_name    — full name (Sinker, Four-Seam Fastball, Slider, Changeup, etc.)
+  start_speed   — velocity at release (mph)
+  end_speed     — velocity at plate (mph)
+  spin_rate     — RPM
+  extension     — release extension in feet
+
+=== PLATE LOCATION (9) ===
+  plate_x / px   — horizontal plate location (px = raw, plate_x = same value — one is redundant)
+  plate_z / pz   — vertical plate location (same situation)
+  sz_top         — top of strike zone for this batter
+  sz_bot         — bottom of strike zone for this batter
+  sz_depth       — strike zone depth
+  sz_width       — strike zone width
+  zone           — zone number (1-9 in zone, 11-14 outside)
+  savantIsInZone — boolean
+  isInZone       — boolean (appears identical to savantIsInZone — one is redundant)
+
+=== MOVEMENT / BREAK (9) — several redundant ===
+  breakX              — horizontal break (inches)
+  inducedBreakZ       — induced vertical break (inches, gravity removed)
+  breakZ              — total vertical break (includes gravity)
+  pfxX                — pfx horizontal movement
+  pfxZ                — pfx vertical movement
+  pfxZWithGravity     — pfxZ including gravity effect
+  pfxXWithGravity     — pfxX including gravity effect (redundant with pfxX)
+  pfxXNoAbs           — pfxX without absolute value (redundant)
+  inducedBreakZForcedSign — string like "+6.2" (redundant with inducedBreakZ — discard)
+
+=== DIRECTION FLAGS — NOISE (3) ===
+  pfxZDirection       — Unicode arrow character (↑↓) — visual label, not data
+  pfxXDirection       — Unicode arrow character (→←) — visual label, not data
+  ivbZDirection       — Unicode arrow character — visual label, not data
+
+=== RELEASE POINT (3) ===
+  x0    — horizontal release position
+  z0    — vertical release position
+  y0    — distance from plate at release (always ~50 ft — less useful)
+
+=== PHYSICS VECTORS — ADVANCED/SPECIALIZED (6) ===
+  ax, ay, az      — acceleration components
+  vx0, vy0, vz0   — velocity components at release
+
+=== DERIVED PLATE POLYNOMIALS — LIKELY NOISE (5) ===
+  plateXPoly        — same value as plate_x (redundant)
+  plateYPoly        — interpolated y at plate
+  plateZPoly        — same value as plate_z (redundant)
+  plateTime         — time from release to plate (seconds)
+  plateTimeSZDepth  — plate time adjusted for SZ depth
+
+=== BATTED BALL / EXIT VELOCITY (12) — merged from exit_velocity array ===
+  hit_speed        — exit velocity (mph) — appears same as launch_speed
+  hit_speed_round  — rounded version of hit_speed
+  launch_speed     — exit velocity (mph) — same as hit_speed, one is redundant
+  hit_angle        — launch angle (degrees) — appears same as launch_angle
+  launch_angle     — launch angle (degrees) — same as hit_angle, one is redundant
+  hit_distance     — projected distance (feet)
+  xba              — expected batting average
+  is_barrel        — barrel flag (0/1)
+  hc_x             — hit coordinate x (spray chart)
+  hc_y             — hit coordinate y (spray chart)
+  hc_x_ft          — hc_x in feet (different coordinate system)
+  hc_y_ft          — hc_y in feet (different coordinate system)
+  NOTE: blank on non-batted-ball pitches — this is correct behavior
+
+=== HTML NOISE (1) ===
+  result_table    — raw <div> HTML string — discard
+
+=== BASERUNNER STATE (3) — not in current README schema ===
+  runnerOn1B, runnerOn2B, runnerOn3B   — boolean flags
+  NOTE: only present on some rows — DECISION NEEDED: include in pitch schema?
+
+=== BAT SPEED (1) — not in current README schema ===
+  batSpeed        — bat speed in mph (notable Statcast metric added ~2024)
+  NOTE: DECISION NEEDED: include in pitch schema?
+
+=== PITCH USAGE COUNTERS (4) ===
+  player_total_pitches            — pitcher's total pitches so far in game
+  player_total_pitches_pitch_types — pitch type breakdown (may be nested object)
+  pitcher_pa_number               — which PA number for this pitcher in game
+  pitcher_time_thru_order         — which time through the order
+
+---
+
+## DECISIONS NEEDED BEFORE CODING
+
+  1. hwp / awp fields in WPA data — keep or discard?
+  2. batSpeed — add to pitch schema?
+  3. runnerOn1B / runnerOn2B / runnerOn3B — add to pitch schema?
+  4. Which break representation to keep: breakX/inducedBreakZ, or pfxX/pfxZ, or both?
+  5. Keep physics vectors (ax/ay/az, vx0/vy0/vz0) or discard as too specialized?
+  6. Keep hc_x/hc_y spray chart coordinates?
+  7. Keep pitcher usage counters (pitcher_pa_number, pitcher_time_thru_order)?
+
+---
+
+## NEXT STEPS (from README)
+
+  1. Review scrape_3.csv and finalize column schema (keep/discard decisions above)
+  2. Write fetch_games.py:
+       - Accepts date argument (defaults to yesterday)
+       - Hits schedule endpoint, filters for Final games
+       - Loops gamePks, hits /gf endpoint for each (with 1-2 sec delay between calls)
+       - Extracts and flattens only wanted fields
+       - Writes four CSV types: pitches, games, innings, wpa
+       - Logs edge cases to edge_cases.log
+  3. Test against gamePk 776661 with sample CSVs before hitting live endpoints
+  4. Website layer deferred until pipeline and clean data are confirmed working
+
+---
+
+## SESSION END NOTES
+
+  - No code was written yet — this session was discovery, analysis, and raw data capture
+  - scrape_3.csv is the sole output artifact
+  - The /gf endpoint was confirmed accessible without authentication
+  - All four future CSV types have confirmed data sources in the API responses
+  - The project is well-documented and ready to move into the coding phase
+
+---
+End of session log.
