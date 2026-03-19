@@ -19,7 +19,7 @@ st.set_page_config(
 )
 
 # ── DB connection ─────────────────────────────────────────────────────────────
-_FALLBACK_URL = "postgresql://postgres:PBMlApFSKUMVxJw2@db.pepkzpdjebituvxzamfn.supabase.co:5432/postgres"
+_FALLBACK_URL = "postgresql://postgres.pepkzpdjebituvxzamfn:PBMlApFSKUMVxJw2@aws-0-ca-central-1.pooler.supabase.com:6543/postgres"
 DB_URL = st.secrets.get("DATABASE_URL", _FALLBACK_URL).replace(
     "postgresql://", "postgresql+psycopg2://"
 )
