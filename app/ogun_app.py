@@ -19,7 +19,10 @@ st.set_page_config(
 )
 
 # ── DB connection ─────────────────────────────────────────────────────────────
-DB_URL = "postgresql+psycopg2://postgres:Manipura1@localhost:5432/baseball_db"
+_FALLBACK_URL = "postgresql://postgres:PBMlApFSKUMVxJw2@db.pepkzpdjebituvxzamfn.supabase.co:5432/postgres"
+DB_URL = st.secrets.get("DATABASE_URL", _FALLBACK_URL).replace(
+    "postgresql://", "postgresql+psycopg2://"
+)
 
 @st.cache_resource
 def get_engine():

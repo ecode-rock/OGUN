@@ -15,6 +15,7 @@ Usage:
 
 import json
 import logging
+import os
 import time
 from datetime import date, timedelta
 
@@ -23,12 +24,9 @@ import requests
 from sqlalchemy import create_engine, text
 
 # ── Connection ─────────────────────────────────────────────────────────────────
-DB_USER = "postgres"
-DB_PASS = "Manipura1"
-DB_HOST = "localhost"
-DB_PORT = 5432
-DB_NAME = "baseball_db"
-TABLE   = "pitches"
+_FALLBACK_URL = "postgresql://postgres:PBMlApFSKUMVxJw2@db.pepkzpdjebituvxzamfn.supabase.co:5432/postgres"
+DATABASE_URL  = os.environ.get("DATABASE_URL", _FALLBACK_URL)
+TABLE         = "pitches"
 
 # ── Date Range ─────────────────────────────────────────────────────────────────
 START_DATE = date(2025, 9, 1)
@@ -579,7 +577,7 @@ def main():
     # ── Phase 4: Load into PostgreSQL ─────────────────────────────────────────
     log.info("PHASE 4 — Connecting to PostgreSQL...")
     engine = create_engine(
-        f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://"),
         future=True,
     )
 
