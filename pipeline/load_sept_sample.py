@@ -33,15 +33,12 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.types import Boolean, Float, Integer, Date, Text
 
 # ── Connection settings ────────────────────────────────────────────────────────
-DB_USER = "postgres"
-DB_PASS = os.environ.get("PGPASSWORD", "")   # set env var or paste password
-DB_HOST = "localhost"
-DB_PORT = 5432
-DB_NAME = "baseball_db"
-TABLE   = "pitches"
+_FALLBACK_URL = "postgresql://postgres.pepkzpdjebituvxzamfn:PBMlApFSKUMVxJw2@aws-1-ca-central-1.pooler.supabase.com:6543/postgres"
+DATABASE_URL  = os.environ.get("DATABASE_URL", _FALLBACK_URL)
+TABLE         = "pitches"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-CSV_PATH   = os.path.join(SCRIPT_DIR, "sept sample.csv")
+CSV_PATH   = os.path.join(SCRIPT_DIR, "..", "data", "sept_sample.csv")
 
 # ── Column type lists ──────────────────────────────────────────────────────────
 BOOL_COLS = [
@@ -153,14 +150,8 @@ def build_dtype_map(df: pd.DataFrame) -> dict:
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    if not DB_PASS:
-        print("ERROR: No database password found.")
-        print("  Option A: set the PGPASSWORD environment variable")
-        print("  Option B: paste your password into DB_PASS in this script")
-        sys.exit(1)
-
     engine = create_engine(
-        f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://"),
         future=True,
     )
 
@@ -175,7 +166,7 @@ def main() -> None:
     print("  Done.")
 
     # ── 3. Create table + load data with explicit types ────────────────────────
-    print(f"Writing {len(df):,} rows to {DB_NAME}.{TABLE} ...")
+    print(f"Writing {len(df):,} rows to {TABLE} ...")
     df.to_sql(
         TABLE,
         engine,

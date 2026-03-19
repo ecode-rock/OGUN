@@ -24,7 +24,7 @@ import requests
 from sqlalchemy import create_engine, text
 
 # ── Connection ─────────────────────────────────────────────────────────────────
-_FALLBACK_URL = "postgresql://postgres:PBMlApFSKUMVxJw2@db.pepkzpdjebituvxzamfn.supabase.co:5432/postgres"
+_FALLBACK_URL = "postgresql://postgres.pepkzpdjebituvxzamfn:PBMlApFSKUMVxJw2@aws-1-ca-central-1.pooler.supabase.com:6543/postgres"
 DATABASE_URL  = os.environ.get("DATABASE_URL", _FALLBACK_URL)
 TABLE         = "pitches"
 
